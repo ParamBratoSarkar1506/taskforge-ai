@@ -1,0 +1,2 @@
+package ai.taskforge.ai; import static org.junit.jupiter.api.Assertions.*; import org.junit.jupiter.api.Test;
+class MockLlmProviderTest { @Test void extractsActionAndExplainsUrgency(){var a=new MockLlmProvider().analyze("Urgent: please review the client proposal by tomorrow.");assertFalse(a.tasks().isEmpty());assertEquals("CRITICAL",a.priority());assertTrue(a.priorityScore()>=75);assertNotNull(a.deadline());} @Test void boundsPriority(){var a=new MockLlmProvider().analyze("Please update documentation.");assertTrue(a.priorityScore()>=0&&a.priorityScore()<=100);} }

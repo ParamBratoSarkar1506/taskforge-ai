@@ -1,0 +1,3 @@
+package ai.taskforge.knowledge; import org.springframework.stereotype.Component;
+/** Development-safe vector representation: stable hashing makes retrieval testable without an embedding API key. */
+@Component public class DeterministicEmbeddingProvider implements EmbeddingProvider { private static final int DIMENSIONS=128; public double[] embed(String text){var v=new double[DIMENSIONS];for(String token:text.toLowerCase().replaceAll("[^a-z0-9 ]"," ").split("\\s+")){if(!token.isBlank())v[Math.floorMod(token.hashCode(),DIMENSIONS)]++;}double norm=0;for(double n:v)norm+=n*n;norm=Math.sqrt(norm);if(norm>0)for(int i=0;i<v.length;i++)v[i]/=norm;return v;} }

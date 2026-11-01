@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/taskforge}
+    username: ${SPRING_DATASOURCE_USERNAME:taskforge}
+    password: ${SPRING_DATASOURCE_PASSWORD:taskforge_dev_only}
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+  servlet.multipart.max-file-size: 15MB
+  servlet.multipart.max-request-size: 16MB
+server.error.include-stacktrace: never
+management.endpoints.web.exposure.include: health,info
+management.endpoint.health.probes.enabled: true
+taskforge:
+  jwt-secret: ${TASKFORGE_JWT_SECRET:development-only-secret-change-before-deployment}
+  ai-provider: ${TASKFORGE_AI_PROVIDER:mock}
+  openai-key: ${OPENAI_API_KEY:}
+  cors-origin: ${CORS_ORIGIN:http://localhost:5173}

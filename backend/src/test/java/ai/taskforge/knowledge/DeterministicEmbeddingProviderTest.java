@@ -1,0 +1,2 @@
+package ai.taskforge.knowledge; import static org.junit.jupiter.api.Assertions.*; import org.junit.jupiter.api.Test;
+class DeterministicEmbeddingProviderTest { @Test void producesStableNormalizedVectors(){var provider=new DeterministicEmbeddingProvider();var a=provider.embed("production deployment approval");var b=provider.embed("production deployment approval");assertArrayEquals(a,b);double norm=0;for(double n:a)norm+=n*n;assertEquals(1d,norm,0.000001);} }

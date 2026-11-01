@@ -1,0 +1,1 @@
+package ai.taskforge.repo; import ai.taskforge.domain.Workflow; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*; public interface WorkflowRepository extends JpaRepository<Workflow,UUID>{}

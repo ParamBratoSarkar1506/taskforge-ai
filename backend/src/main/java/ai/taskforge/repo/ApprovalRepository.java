@@ -1,0 +1,1 @@
+package ai.taskforge.repo; import ai.taskforge.domain.*; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*; public interface ApprovalRepository extends JpaRepository<Approval,UUID>{ List<Approval> findByApproverIdAndStatus(UUID id,ApprovalStatus status); boolean existsByTaskIdAndStatus(UUID taskId,ApprovalStatus status); }

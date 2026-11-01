@@ -1,0 +1,3 @@
+package ai.taskforge.domain;
+import jakarta.persistence.*; import java.time.*; import java.util.*;
+@Entity @Table(name="workflows") public class Workflow { @Id @GeneratedValue private UUID id; @Column(nullable=false) private String name; private String description; private boolean active=true; @ManyToOne @JoinColumn(name="created_by_id",nullable=false) private AppUser createdBy; @Column(nullable=false,updatable=false) private Instant createdAt=Instant.now(); protected Workflow(){} public Workflow(String n,String d,AppUser u){name=n;description=d;createdBy=u;} public UUID getId(){return id;} public String getName(){return name;} public String getDescription(){return description;} public boolean isActive(){return active;} }

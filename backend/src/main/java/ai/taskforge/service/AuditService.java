@@ -1,0 +1,2 @@
+package ai.taskforge.service; import ai.taskforge.domain.*; import ai.taskforge.repo.AuditLogRepository; import org.springframework.stereotype.Service; import java.util.*;
+@Service public class AuditService { private final AuditLogRepository logs;public AuditService(AuditLogRepository l){logs=l;} public void record(AppUser actor,String action,String type,UUID id,String before,String after){logs.save(new AuditLog(actor,action,type,id,before,after));} }

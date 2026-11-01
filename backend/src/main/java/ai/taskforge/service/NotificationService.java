@@ -1,0 +1,2 @@
+package ai.taskforge.service; import ai.taskforge.domain.*; import ai.taskforge.repo.NotificationRepository; import org.springframework.stereotype.Service;
+@Service public class NotificationService { private final NotificationRepository notifications;public NotificationService(NotificationRepository n){notifications=n;} public void send(AppUser recipient,String type,String message){notifications.save(new Notification(recipient,type,message));} }

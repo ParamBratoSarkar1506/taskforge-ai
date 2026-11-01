@@ -1,0 +1,1 @@
+package ai.taskforge.repo; import ai.taskforge.domain.DocumentChunk; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*; public interface DocumentChunkRepository extends JpaRepository<DocumentChunk,UUID>{ void deleteByDocumentId(UUID documentId); List<DocumentChunk> findAllByDocumentId(UUID documentId); }

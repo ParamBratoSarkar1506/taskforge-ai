@@ -1,0 +1,3 @@
+package ai.taskforge.domain;
+import jakarta.persistence.*; import java.util.*;
+@Entity @Table(name="users") public class AppUser { @Id @GeneratedValue private UUID id; @Column(nullable=false,unique=true) private String email; @Column(nullable=false) private String passwordHash; @Column(nullable=false) private String displayName; @Enumerated(EnumType.STRING) @Column(nullable=false) private Role role; protected AppUser(){} public AppUser(String e,String p,String n,Role r){email=e;passwordHash=p;displayName=n;role=r;} public UUID getId(){return id;} public String getEmail(){return email;} public String getPasswordHash(){return passwordHash;} public String getDisplayName(){return displayName;} public Role getRole(){return role;} }
