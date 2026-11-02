@@ -4,7 +4,103 @@ const nav=['Dashboard','My Tasks','Team Workload','Inbox','Documents','Knowledge
 function Login({onLogin}:{onLogin:()=>void}){const [email,setEmail]=useState('manager@taskforge.demo'),[password,setPassword]=useState('DemoPass123!'),[error,setError]=useState('');async function submit(e:React.FormEvent){e.preventDefault();try{const a=await api<{token:string;name:string;role:string}>('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});localStorage.token=a.token;localStorage.name=a.name;localStorage.role=a.role;onLogin()}catch(e){setError(e instanceof Error?e.message:'Login failed')}}return <main className="login"><section><span className="logo">✦ TaskForge AI</span><h1>From information<br/>to action.</h1><p>Turn enterprise emails and documents into explainable, accountable work.</p><div className="demo">Demo: manager@taskforge.demo<br/>Password: DemoPass123!</div></section><form onSubmit={submit}><h2>Welcome back</h2><label>Work email<input value={email} onChange={e=>setEmail(e.target.value)} type="email"/></label><label>Password<input value={password} onChange={e=>setPassword(e.target.value)} type="password"/></label>{error&&<p className="error">{error}</p>}<button>Sign in</button></form></main>}
 function App(){const [page,setPage]=useState('Dashboard'),[logged,setLogged]=useState(!!localStorage.token);if(!logged)return <Login onLogin={()=>setLogged(true)}/>;return <div className="shell"><aside><span className="logo">✦ TaskForge AI</span><small>FROM INFORMATION TO ACTION</small><nav>{nav.map(n=><button className={page===n?'active':''} onClick={()=>setPage(n)} key={n}>{n}</button>)}</nav><div className="profile"><b>{localStorage.name}</b><span>{localStorage.role}</span><button onClick={()=>{localStorage.clear();setLogged(false)}}>Sign out</button></div></aside><main className="content"><header><div><p className="eyebrow">WORKSPACE / {page.toUpperCase()}</p><h1>{page}</h1></div><div className="top-actions"><input placeholder="Search work…"/><Notifications/></div></header>{page==='Dashboard'?<Dashboard/>:page==='Inbox'?<Inbox/>:page==='My Tasks'?<Tasks/>:page==='Documents'?<Documents/>:page==='Knowledge Base'?<Knowledge/>:page==='Workflows'?<Workflows/>:page==='Approvals'?<Approvals/>:page==='AI Assistant'?<Assistant/>:<Empty title={page}/>}</main></div>}
 function Dashboard(){const q=useQuery({queryKey:['summary'],queryFn:()=>api<Summary>('/api/dashboard/summary')});const cards=[['Total work',q.data?.total],['Critical',q.data?.critical],['Blocked',q.data?.blocked],['Due today',q.data?.dueToday]];return <>{q.isLoading?<p>Loading workspace…</p>:<><section className="attention"><div><span>ATTENTION REQUIRED</span><h2>{q.data?.critical||0} critical items need a decision</h2><p>Focus on blocked deployment work and tasks approaching their due dates.</p></div><button>Review priorities →</button></section><section className="metrics">{cards.map(([label,value])=><article key={String(label)}><span>{label}</span><strong>{String(value??0)}</strong><small>{label==='Blocked'?'Resolve dependency chain':label==='Critical'?'High-impact client work':'Across your visible workspace'}</small></article>)}</section><section className="split"><Tasks compact/><section className="panel"><div className="panel-title"><h2>AI activity</h2><button>View all</button></div><div className="activity"><i>✦</i><div><b>Inbox intelligence is ready</b><p>Paste a client request to extract structured, editable work.</p></div></div><div className="activity"><i>✓</i><div><b>Knowledge indexing enabled</b><p>PDF, DOCX, and TXT uploads are extracted server-side.</p></div></div></section></section></>}</>}
-function Tasks({compact=false}:{compact?:boolean}){const q=useQuery({queryKey:['tasks'],queryFn:()=>api<Task[]>('/api/tasks')});return <section className={compact?'panel':'tasks'}><div className="panel-title"><h2>{compact?'Priority work':'My Tasks'}</h2><button>+ New task</button></div>{q.isLoading?<p>Loading tasks…</p>:q.isError?<p className="error">Tasks could not be loaded. Refresh the page or check the API logs.</p>:<div className="task-list">{q.data?.map(t=><article className="task" key={t.id}><span className={`dot ${t.priority.toLowerCase()}`}/><div><b>{t.title}</b><p>{t.project||'Unassigned project'} · {t.assignee||'Unassigned'}</p></div><em>{t.dueDate||'No deadline'}</em><strong className={`pill ${t.status.toLowerCase()}`}>{t.status.replace('_',' ')}</strong></article>)}</div>}</section>}
+
+function Tasks({compact=false}:{compact?:boolean}){
+  const q=useQuery({queryKey:['tasks'],queryFn:()=>api<Task[]>('/api/tasks')});
+  const [showForm,setShowForm]=useState(false);
+  const [title,setTitle]=useState('');
+  const [description,setDescription]=useState('');
+  const [priority,setPriority]=useState('MEDIUM');
+  const [dueDate,setDueDate]=useState('');
+  const [error,setError]=useState('');
+  const [saving,setSaving]=useState(false);
+
+  async function createTask(e:React.FormEvent){
+    e.preventDefault();
+    if(!title.trim()){
+      setError('Task title is required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try{
+      await api('/api/tasks',{
+        method:'POST',
+        body:JSON.stringify({
+          title:title.trim(),
+          description:description.trim()||null,
+          priority,
+          dueDate:dueDate||null
+        })
+      });
+      await q.refetch();
+      setTitle('');
+      setDescription('');
+      setPriority('MEDIUM');
+      setDueDate('');
+      setShowForm(false);
+    }catch(e){
+      setError(e instanceof Error?e.message:'Could not create task.');
+    }finally{
+      setSaving(false);
+    }
+  }
+
+  return <section className={compact?'panel':'page'}>
+    <div className="panel-title">
+      <h2>{compact?'Priority work':'My Tasks'}</h2>
+      {!compact&&<button onClick={()=>setShowForm(!showForm)}>
+        {showForm?'Cancel':' + New task'}
+      </button>}
+    </div>
+
+    {!compact&&showForm&&<form className="panel" onSubmit={createTask}>
+      <label>Task title
+        <input value={title} onChange={e=>setTitle(e.target.value)}
+          required placeholder="Enter task title"/>
+      </label>
+      <label>Description
+        <textarea value={description}
+          onChange={e=>setDescription(e.target.value)}
+          placeholder="Describe the task"/>
+      </label>
+      <label>Priority
+        <select value={priority} onChange={e=>setPriority(e.target.value)}>
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+          <option value="CRITICAL">Critical</option>
+        </select>
+      </label>
+      <label>Due date
+        <input type="date" value={dueDate}
+          onChange={e=>setDueDate(e.target.value)}/>
+      </label>
+      {error&&<p className="error">{error}</p>}
+      <button type="submit" disabled={saving}>
+        {saving?'Creating...':'Create task'}
+      </button>
+    </form>}
+
+    {q.isLoading?<p>Loading tasks...</p>:q.isError?
+      <p className="error">Tasks could not be loaded. Refresh the page or check the API logs.</p>:
+      <div className="task-list">{q.data?.map(t=>
+        <article className="task" key={t.id}>
+          <span className={`dot ${t.priority.toLowerCase()}`}/>
+          <div>
+            <b>{t.title}</b>
+            <p>{t.project||'Unassigned project'} · {t.assignee||'Unassigned'}</p>
+          </div>
+          <em>{t.dueDate||'No deadline'}</em>
+          <strong className={`pill ${t.status.toLowerCase()}`}>
+            {t.status.replace('_',' ')}
+          </strong>
+        </article>
+      )}</div>
+    }
+  </section>;
+}
+
 function Inbox(){const [text,setText]=useState('Hi team,\n\nThe client has requested the revised proposal by Friday. Please review the pricing section with Finance before sending it.\n\nThanks.'),[result,setResult]=useState<any>(),[error,setError]=useState('');async function analyse(){setError('');try{setResult(await api('/api/ai/analyze',{method:'POST',body:JSON.stringify({text,sourceType:'EMAIL'})}))}catch(e){setError(e instanceof Error?e.message:'Analysis failed')}}return <section className="inbox"><div className="panel"><span className="eyebrow">INBOX SIMULATOR</span><h2>Turn a message into work</h2><p>AI proposals are reviewable; nothing is created until your team confirms it.</p><textarea value={text} onChange={e=>setText(e.target.value)}/>{error&&<p className="error">{error}</p>}<button onClick={analyse}>✦ Analyze with TaskForge AI</button></div>{result&&<section className="analysis"><span className="eyebrow">AI PROPOSAL · {result.priority} {result.priorityScore}/100</span><h2>{result.summary}</h2><ul>{result.reasons.map((r:string)=><li key={r}>{r}</li>)}</ul><h3>Suggested work</h3>{result.tasks.map((t:any,i:number)=><article className="proposal" key={i}><b>{t.title}</b><span>{t.priority} · {t.estimatedEffort}</span></article>)}<button className="secondary">Review & create tasks</button></section>}</section>}
 function Knowledge(){const [question,setQuestion]=useState('What is required before production deployment?'),[answer,setAnswer]=useState<any>(),[error,setError]=useState('');async function ask(e:React.FormEvent){e.preventDefault();setError('');try{setAnswer(await api('/api/knowledge/ask',{method:'POST',body:JSON.stringify({question})}))}catch(e){setError(e instanceof Error?e.message:'Could not search knowledge.')}}return <section className="knowledge"><section className="panel"><span className="eyebrow">GROUNDED KNOWLEDGE</span><h2>Ask your enterprise documents</h2><p>Answers cite only indexed source chunks. If the context is missing, TaskForge says so.</p><form onSubmit={ask}><input value={question} onChange={e=>setQuestion(e.target.value)}/><button>Search knowledge →</button></form>{error&&<p className="error">{error}</p>}</section>{answer&&<section className="analysis"><span className="eyebrow">GROUNDED ANSWER</span><h2>{answer.answer}</h2><h3>Sources</h3>{answer.sources.map((s:any)=><article className="proposal" key={`${s.documentId}-${s.chunkIndex}`}><b>{s.filename}</b><span>Chunk {s.chunkIndex+1} · {Math.round(s.score*100)}% match</span></article>)}</section>}</section>}
 function Documents(){const q=useQuery({queryKey:['documents'],queryFn:()=>api<any[]>('/api/documents')});const [error,setError]=useState('');async function upload(file?:File){if(!file)return;setError('');const body=new FormData();body.append('file',file);const r=await fetch('/api/documents',{method:'POST',headers:localStorage.token?{Authorization:`Bearer ${localStorage.token}`}:{},body});if(!r.ok){const e=await r.json().catch(()=>({message:'Upload failed'}));setError(e.message);return}await q.refetch()}return <section className="panel"><div className="panel-title"><div><span className="eyebrow">DOCUMENT LIBRARY</span><h2>Indexed enterprise knowledge</h2></div><label className="upload">Upload document<input type="file" accept=".pdf,.docx,.txt" onChange={e=>upload(e.target.files?.[0])}/></label></div><p>Upload PDF, DOCX, or TXT documents; TaskForge extracts and indexes them for grounded answers.</p>{error&&<p className="error">{error}</p>}{q.isLoading?<p>Loading documents…</p>:<div className="task-list">{q.data?.map(d=><article className="task" key={d.id}><span className="dot"/><div><b>{d.filename}</b><p>{d.type||'Unknown type'} · {new Date(d.uploadedAt).toLocaleDateString()}</p></div><strong className="pill">{d.status}</strong></article>)}</div>}</section>}
